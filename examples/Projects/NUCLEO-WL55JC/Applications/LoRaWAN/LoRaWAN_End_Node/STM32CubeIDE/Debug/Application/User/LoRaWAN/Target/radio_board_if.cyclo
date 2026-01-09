@@ -1,0 +1,8 @@
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/LoRaWAN/Target/radio_board_if.c:57:9:RBI_Init	1
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/LoRaWAN/Target/radio_board_if.c:121:9:RBI_DeInit	1
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/LoRaWAN/Target/radio_board_if.c:167:9:RBI_ConfigRFSwitch	5
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/LoRaWAN/Target/radio_board_if.c:251:9:RBI_GetTxConfig	1
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/LoRaWAN/Target/radio_board_if.c:274:9:RBI_GetWakeUpTime	1
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/LoRaWAN/Target/radio_board_if.c:297:9:RBI_IsTCXO	1
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/LoRaWAN/Target/radio_board_if.c:320:9:RBI_IsDCDC	1
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/LoRaWAN/Target/radio_board_if.c:343:9:RBI_GetRFOMaxPowerConfig	2

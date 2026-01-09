@@ -1,0 +1,9 @@
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/Core/Src/flash_if.c:394:31:FLASH_IF_INT_Clear_Error	8	static
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/Core/Src/flash_if.c:342:31:FLASH_IF_INT_Erase	40	static
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/Core/Src/flash_if.c:115:24:FLASH_IF_Init	0	static
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/Core/Src/flash_if.c:129:24:FLASH_IF_DeInit	0	static
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/Core/Src/flash_if.c:143:24:FLASH_IF_Write	88	static
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/Core/Src/flash_if.c:159:24:FLASH_IF_Read	16	static
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/Core/Src/flash_if.c:175:24:FLASH_IF_Erase	4	static
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/Core/Src/flash_if.c:425:6:HAL_FLASH_EndOfOperationCallback	0	static
+C:/D_DRIVE_BACKUP/workspace/stm32cubewl-v1-4-0/STM32Cube_FW_WL_V1.4.0/Projects/NUCLEO-WL55JC/Applications/LoRaWAN/LoRaWAN_End_Node/Core/Src/flash_if.c:442:6:HAL_FLASH_OperationErrorCallback	0	static
