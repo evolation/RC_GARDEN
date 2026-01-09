@@ -21,6 +21,7 @@
 #include "app_subghz_phy.h"
 #include "gpio.h"
 #include "pwm_if.h"
+#include "pwm_monitor.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -88,6 +89,7 @@ int main(void)
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
   PWM_Init();
+  PWM_MON_Init();  /* Initialize PWM input monitor */
   MX_SubGHz_Phy_Init();
   /* USER CODE BEGIN 2 */
 
@@ -100,6 +102,7 @@ int main(void)
     /* USER CODE END WHILE */
     MX_SubGHz_Phy_Process();
     PWM_Process();
+    PWM_MON_Process();  /* Monitor PWM inputs and send unsolicited responses */
 
     /* USER CODE BEGIN 3 */
   }

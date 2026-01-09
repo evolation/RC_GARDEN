@@ -10,6 +10,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32_timer_optimized.h"
+#include "stm32_timer.h"
 #include "stm32wlxx_hal.h"
 #include "stm32wlxx_ll_tim.h"
 #include "stm32wlxx_ll_lptim.h"
@@ -88,7 +89,7 @@ UTIL_TIMER_Status_t HW_TIMER_Init(void)
 UTIL_TIMER_Status_t HW_TIMER_DeInit(void)
 {
     HW_TIMER_Stop(TimerListHead);
-    HAL_LPTIM_Stop_IT(&hlptim1);
+    HAL_LPTIM_TimeOut_Stop_IT(&hlptim1);
 
     return UTIL_TIMER_OK;
 }
@@ -210,7 +211,7 @@ UTIL_TIMER_Status_t HW_TIMER_Stop(HW_TIMER_Object_t *TimerObject)
                 else
                 {
                     /* Stop all active timers */
-                    HAL_LPTIM_Stop_IT(&hlptim1);
+                    HAL_LPTIM_TimeOut_Stop_IT(&hlptim1);
                     HAL_RTC_DeactivateAlarm(&hrtc, RTC_ALARM_A);
                     TimerListHead = NULL;
                 }
@@ -655,7 +656,7 @@ static void TimerSetTimeout(HW_TIMER_Object_t *TimerObject)
     switch (TimerObject->TimerType)
     {
         case HW_TIMER_LPTIM1:
-            HAL_LPTIM_Start_IT(&hlptim1, TimerObject->Timestamp);
+            HAL_LPTIM_TimeOut_Start_IT(&hlptim1, 65535, TimerObject->Timestamp);
             break;
 
         case HW_TIMER_TIM2:

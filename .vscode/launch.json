@@ -17,6 +17,22 @@
       "swoConfig": {
         "enabled": false
       }
+    },
+    {
+      "name": "Debug RAK3172 (ST-Link)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "stlink",
+      "device": "STM32WL55CC_M4",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/SubGHz_Phy_AT_Slave.elf",
+      "svdFile": "${workspaceFolder}/STM32WLE5_CM4.svd",
+      "preLaunchTask": "Build",
+      "swoConfig": {
+        "enabled": false
+      }
     }
   ]
 }

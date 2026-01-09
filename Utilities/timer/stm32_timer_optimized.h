@@ -24,6 +24,7 @@ extern "C" {
 #include "stm32wlxx_ll_lptim.h"
 #include "stm32wlxx_hal_tim.h"
 #include "utilities_conf.h"
+#include "timer_if.h"
 
 /** @defgroup TIMER_OPTIMIZED Optimized Hardware Timer Server
   * @{

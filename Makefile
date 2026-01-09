@@ -39,6 +39,7 @@ C_SOURCES =  \
 Core/Src/main.c \
 Core/Src/gpio.c \
 Core/Src/pwm_if.c \
+Core/Src/pwm_monitor.c \
 Core/Src/dma.c \
 Core/Src/usart.c \
 Core/Src/rtc.c \
@@ -74,6 +75,9 @@ Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_uart.c \
 Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_uart_ex.c \
 Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_rtc.c \
 Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_rtc_ex.c \
+Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_tim.c \
+Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_tim_ex.c \
+Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_lptim.c \
 Drivers/STM32WLxx_HAL_Driver/Src/stm32wlxx_hal_subghz.c \
 Core/Src/system_stm32wlxx.c \
 Middlewares/Third_Party/SubGHz_Phy/stm32_radio_driver/lr_fhss_mac.c \
@@ -91,6 +95,14 @@ Utilities/timer/stm32_timer.c \
 Utilities/lpm/tiny_lpm/stm32_lpm.c \
 Core/Src/sysmem.c \
 Core/Src/syscalls.c  
+
+# Optional: enable optimized timer implementation
+# set USE_OPTIMIZED_TIMER=1 to compile stm32_timer_optimized.c
+USE_OPTIMIZED_TIMER ?= 0
+ifeq ($(USE_OPTIMIZED_TIMER),1)
+C_SOURCES += \
+	Utilities/timer/stm32_timer_optimized.c
+endif
 
 # ASM sources
 ASM_SOURCES =  \
