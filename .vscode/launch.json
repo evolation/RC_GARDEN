@@ -1,0 +1,22 @@
+// .vscode/launch.json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug RAK3172 (J-Link)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "jlink",
+      "device": "STM32WL55CC_M4",        // <- important
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "cwd": "${workspaceFolder}",
+      "executable": "${workspaceFolder}/build/SubGHz_Phy_AT_Slave.elf", // adjust path/name
+      "svdFile": "${workspaceFolder}/STM32WLE5_CM4.svd",       // optional, for regs view
+      "preLaunchTask": "Build",
+      "swoConfig": {
+        "enabled": false
+      }
+    }
+  ]
+}
