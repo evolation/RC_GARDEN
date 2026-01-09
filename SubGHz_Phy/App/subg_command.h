@@ -27,6 +27,7 @@ extern "C" {
 #endif
 
 /* Includes ------------------------------------------------------------------*/
+#include <stdint.h>
 /* USER CODE BEGIN Includes */
 
 /* USER CODE END Includes */
@@ -65,6 +66,19 @@ void CMD_Init(void (*CmdProcessNotify)(void));
   * @brief Process the command
   */
 void CMD_Process(void);
+
+/**
+  * @brief Push a received character into the AT command parser.
+  * @param rxChar Character to push. Use AT_ERROR_RX_CHAR to signal RX error.
+  */
+void CMD_ReceiveChar(uint8_t rxChar);
+
+/**
+  * @brief Push a received buffer into the AT command parser.
+  * @param data Pointer to received data.
+  * @param size Number of bytes in data.
+  */
+void CMD_ReceiveBuffer(const uint8_t *data, uint16_t size);
 
 /* USER CODE BEGIN EFP */
 

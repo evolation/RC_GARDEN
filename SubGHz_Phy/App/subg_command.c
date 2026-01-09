@@ -59,7 +59,7 @@ struct ATCommand_s
 
 /* Private define ------------------------------------------------------------*/
 #define CMD_SIZE                        540
-#define CIRC_BUFF_SIZE                  8
+#define CIRC_BUFF_SIZE                  CMD_SIZE
 
 /* USER CODE BEGIN PD */
 
@@ -313,6 +313,17 @@ static void com_error(ATEerror_t error_type);
 static void CMD_GetChar(uint8_t *rxChar, uint16_t size, uint8_t error);
 
 /**
+  * @brief  Push a received character into the parser buffer
+  * @param  rxChar the received character
+  */
+static void CMD_PushChar(uint8_t rxChar);
+
+/**
+  * @brief  Notify the upper layer that data is available
+  */
+static void CMD_Notify(void);
+
+/**
   * @brief  CNotifies the upper layer that a character has been received
   */
 static void (*NotifyCb)(void);
@@ -430,6 +441,28 @@ void CMD_Process(void)
   /* USER CODE END CMD_Process_2 */
 }
 
+void CMD_ReceiveChar(uint8_t rxChar)
+{
+  CMD_PushChar(rxChar);
+  CMD_Notify();
+}
+
+void CMD_ReceiveBuffer(const uint8_t *data, uint16_t size)
+{
+  uint16_t idx = 0;
+
+  if ((data == NULL) || (size == 0))
+  {
+    return;
+  }
+
+  for (idx = 0; idx < size; idx++)
+  {
+    CMD_PushChar(data[idx]);
+  }
+  CMD_Notify();
+}
+
 /* USER CODE BEGIN EF */
 
 /* USER CODE END EF */
@@ -484,11 +517,9 @@ static int32_t CMD_ProcessBackSpace(char *cmd)
   /* USER CODE END CMD_ProcessBackSpace_2 */
 }
 
-static void CMD_GetChar(uint8_t *rxChar, uint16_t size, uint8_t error)
+static void CMD_PushChar(uint8_t rxChar)
 {
-  /* USER CODE BEGIN CMD_GetChar_1 */
-
-  /* USER CODE END CMD_GetChar_1 */
+  UTILS_ENTER_CRITICAL_SECTION();
   charCount++;
   if (charCount == (CIRC_BUFF_SIZE + 1))
   {
@@ -497,17 +528,38 @@ static void CMD_GetChar(uint8_t *rxChar, uint16_t size, uint8_t error)
   }
   else
   {
-    circBuffer[widx++] = *rxChar;
+    circBuffer[widx++] = rxChar;
     if (widx == CIRC_BUFF_SIZE)
     {
       widx = 0;
     }
   }
+  UTILS_EXIT_CRITICAL_SECTION();
+}
 
+static void CMD_Notify(void)
+{
   if (NotifyCb != NULL)
   {
     NotifyCb();
   }
+}
+
+static void CMD_GetChar(uint8_t *rxChar, uint16_t size, uint8_t error)
+{
+  /* USER CODE BEGIN CMD_GetChar_1 */
+
+  /* USER CODE END CMD_GetChar_1 */
+  (void)size;
+  (void)error;
+
+  if (rxChar == NULL)
+  {
+    return;
+  }
+
+  CMD_PushChar(*rxChar);
+  CMD_Notify();
   /* USER CODE BEGIN CMD_GetChar_2 */
 
   /* USER CODE END CMD_GetChar_2 */
