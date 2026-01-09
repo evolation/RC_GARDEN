@@ -99,8 +99,9 @@ PWM_Status_t PWM_GetDutyCycle(PWM_Channel_t channel, uint32_t *duty_percent);
 uint8_t PWM_IsEnabled(PWM_Channel_t channel);
 
 /**
- * @brief Process PWM signals (call this periodically, e.g., from SysTick)
- *        Should be called approximately every 1ms for proper PWM operation
+ * @brief Process PWM signals (call this periodically, e.g., from SysTick every 0.1ms)
+ *        For 50 Hz servo: call every 0.1ms for best resolution
+ *        Can also call every 1ms for acceptable jitter
  */
 void PWM_Process(void);
 

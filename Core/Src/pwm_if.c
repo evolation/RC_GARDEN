@@ -2,8 +2,9 @@
 /**
   ******************************************************************************
   * @file    pwm_if.c
-  * @brief   PWM interface implementation using software PWM on separate GPIO pins
-  *          Note: STM32WL55 has limited timer support, so software PWM is used
+  * @brief   PWM interface implementation using optimized software PWM
+  *          50 Hz servo standard with 1.0-2.0 ms pulse width
+  *          Note: Hardware timers not available in this HAL build
   ******************************************************************************
   * @attention
   *
@@ -40,6 +41,7 @@ typedef struct
 #define PWM_PERIOD_MS 20U          /**< PWM period in milliseconds (50 Hz - servo standard) */
 #define PWM_PULSE_MIN_MS 1U        /**< Minimum pulse width in ms (1.0 ms) */
 #define PWM_PULSE_MAX_MS 2U        /**< Maximum pulse width in ms (2.0 ms) */
+#define PWM_RESOLUTION 10U         /**< Sub-millisecond resolution (0.1 ms steps) */
 
 /* Private macro -------------------------------------------------------------*/
 
@@ -52,8 +54,8 @@ static PWM_ChannelState_t pwm_states[PWM_CHANNEL_MAX] = {
   {.duty_cycle = 50U, .enabled = 0, .pin = PWM2_Pin, .port = PWM2_GPIO_Port}   /* Channel 2 - PA9 */
 };
 
-/* Counter for software PWM timing */
-static uint32_t pwm_counter = 0;
+/* Counter for software PWM timing (0 to PWM_PERIOD_MS * PWM_RESOLUTION) */
+static volatile uint32_t pwm_counter = 0;
 
 /* Private function prototypes -----------------------------------------------*/
 /**
@@ -157,16 +159,18 @@ uint8_t PWM_IsEnabled(PWM_Channel_t channel)
 
 /**
  * @brief Called periodically from main loop to update PWM signals
- *        This function should be called approximately every 1 millisecond
+ *        This function should be called approximately every 0.1 ms
  *        
+ *        Optimized software PWM with improved precision:
  *        50 Hz servo standard: 20 ms period
  *        Pulse width: 1.0-2.0 ms (maps to 0-100% throttle)
+ *        Resolution: 0.1 ms per counter increment
  */
 void PWM_Process(void)
 {
-  /* Increment counter modulo PWM_PERIOD_MS (20 ms for 50 Hz) */
+  /* Increment counter modulo (PWM_PERIOD_MS * PWM_RESOLUTION) */
   pwm_counter++;
-  if (pwm_counter >= PWM_PERIOD_MS)
+  if (pwm_counter >= (PWM_PERIOD_MS * PWM_RESOLUTION))
   {
     pwm_counter = 0;
   }
@@ -185,7 +189,7 @@ void PWM_Process(void)
 static void PWM_Update(void)
 {
   uint8_t ch;
-  uint32_t pulse_width_ms;  /* Pulse width in milliseconds (1-2) */
+  uint32_t pulse_threshold;  /* Pulse width threshold in 0.1ms units */
 
   for (ch = 0; ch < PWM_CHANNEL_MAX; ch++)
   {
@@ -197,12 +201,14 @@ static void PWM_Update(void)
     }
 
     /* Map duty cycle (0-100) to pulse width (1.0-2.0 ms) */
-    /* pulse_width_ms = 1 + (duty_cycle * 1) / 100 */
-    /* Example: 0% → 1ms, 50% → 1.5ms, 100% → 2ms */
-    pulse_width_ms = PWM_PULSE_MIN_MS + (pwm_states[ch].duty_cycle / 100U);
+    /* pulse_threshold = (1.0 + (duty_cycle / 100)) ms converted to 0.1 ms units */
+    /* pulse_threshold = (1.0 * PWM_RESOLUTION) + (duty_cycle * PWM_RESOLUTION / 100) */
+    /* pulse_threshold = 10 + (duty_cycle / 10) in 0.1ms units */
+    pulse_threshold = (PWM_PULSE_MIN_MS * PWM_RESOLUTION) + 
+                      (pwm_states[ch].duty_cycle * PWM_RESOLUTION / 100U);
 
     /* Output high during pulse width, low for rest of period */
-    if (pwm_counter < pulse_width_ms)
+    if (pwm_counter < pulse_threshold)
     {
       HAL_GPIO_WritePin(pwm_states[ch].port, pwm_states[ch].pin, GPIO_PIN_SET);
     }
