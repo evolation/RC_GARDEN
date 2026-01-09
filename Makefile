@@ -38,6 +38,7 @@ BUILD_DIR = build
 C_SOURCES =  \
 Core/Src/main.c \
 Core/Src/gpio.c \
+Core/Src/pwm_if.c \
 Core/Src/dma.c \
 Core/Src/usart.c \
 Core/Src/rtc.c \
@@ -112,7 +113,7 @@ ifeq ($(OS),Windows_NT)
     GCC_PATH ?=
 else
     # Linux: default path to your toolchain
-    GCC_PATH ?= ../gcc-arm-none-eabi-10.3-2021.10/bin
+    GCC_PATH ?= ../gcc-arm-none-eabi-linux-x64/bin
 endif
 
 # Toolchain commands

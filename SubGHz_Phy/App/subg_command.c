@@ -248,6 +248,31 @@ static const struct ATCommand_s ATCommand[] =
   },
 #endif /*AT_RADIO_ACCESS*/
 
+  /* PWM commands */
+  {
+    .string = AT_PWM1,
+    .size_string = sizeof(AT_PWM1) - 1,
+#ifndef NO_HELP
+    .help_string = "AT"AT_PWM1"=<DutyCycle><CR> Set PWM1 duty cycle (0-100%)\r\n"
+                   "AT"AT_PWM1"? Get PWM1 duty cycle\r\n",
+#endif /* !NO_HELP */
+    .get = AT_pwm1_get,
+    .set = AT_pwm1_set,
+    .run = AT_return_error,
+  },
+
+  {
+    .string = AT_PWM2,
+    .size_string = sizeof(AT_PWM2) - 1,
+#ifndef NO_HELP
+    .help_string = "AT"AT_PWM2"=<DutyCycle><CR> Set PWM2 duty cycle (0-100%)\r\n"
+                   "AT"AT_PWM2"? Get PWM2 duty cycle\r\n",
+#endif /* !NO_HELP */
+    .get = AT_pwm2_get,
+    .set = AT_pwm2_set,
+    .run = AT_return_error,
+  },
+
   /* USER CODE BEGIN ATCommand */
 
   /* USER CODE END ATCommand */

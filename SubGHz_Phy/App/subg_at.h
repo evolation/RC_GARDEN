@@ -93,6 +93,10 @@ typedef enum eATEerror
 #define AT_REGW       "+REGW"
 #define AT_REGR       "+REGR"
 
+/* PWM commands */
+#define AT_PWM1       "+PWM1"
+#define AT_PWM2       "+PWM2"
+
 /* USER CODE BEGIN EM */
 
 /* USER CODE END EM */
@@ -219,6 +223,35 @@ ATEerror_t AT_write_register(const char *param);
   * @retval AT_OK
   */
 ATEerror_t AT_read_register(const char *param);
+
+/* --------------- PWM commands --------------- */
+/**
+  * @brief  Get PWM1 duty cycle
+  * @param  param String parameter
+  * @retval AT_OK or AT_ERROR
+  */
+ATEerror_t AT_pwm1_get(const char *param);
+
+/**
+  * @brief  Set PWM1 duty cycle
+  * @param  param String parameter
+  * @retval AT_OK or AT_PARAM_ERROR
+  */
+ATEerror_t AT_pwm1_set(const char *param);
+
+/**
+  * @brief  Get PWM2 duty cycle
+  * @param  param String parameter
+  * @retval AT_OK or AT_ERROR
+  */
+ATEerror_t AT_pwm2_get(const char *param);
+
+/**
+  * @brief  Set PWM2 duty cycle
+  * @param  param String parameter
+  * @retval AT_OK or AT_PARAM_ERROR
+  */
+ATEerror_t AT_pwm2_set(const char *param);
 
 /* USER CODE BEGIN EFP */
 

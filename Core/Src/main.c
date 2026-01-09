@@ -20,6 +20,7 @@
 #include "main.h"
 #include "app_subghz_phy.h"
 #include "gpio.h"
+#include "pwm_if.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -86,6 +87,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  PWM_Init();
   MX_SubGHz_Phy_Init();
   /* USER CODE BEGIN 2 */
 
@@ -97,6 +99,7 @@ int main(void)
   {
     /* USER CODE END WHILE */
     MX_SubGHz_Phy_Process();
+    PWM_Process();
 
     /* USER CODE BEGIN 3 */
   }

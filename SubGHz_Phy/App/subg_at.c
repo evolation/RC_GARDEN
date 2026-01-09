@@ -31,6 +31,7 @@
 #include "radio.h"
 #include "stm32_timer.h"
 #include "stm32_systime.h"
+#include "pwm_if.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -813,6 +814,101 @@ static int32_t isHex(char Char)
   /* USER CODE BEGIN isHex_2 */
 
   /* USER CODE END isHex_2 */
+}
+
+/* --------------- PWM commands --------------- */
+ATEerror_t AT_pwm1_get(const char *param)
+{
+  /* USER CODE BEGIN AT_pwm1_get_1 */
+
+  /* USER CODE END AT_pwm1_get_1 */
+  uint32_t duty_cycle = 0;
+
+  if (PWM_GetDutyCycle(PWM_CHANNEL_1, &duty_cycle) == PWM_OK)
+  {
+    AT_PRINTF("+PWM1:%lu\r\n", duty_cycle);
+    return AT_OK;
+  }
+  else
+  {
+    return AT_ERROR;
+  }
+
+  /* USER CODE BEGIN AT_pwm1_get_2 */
+
+  /* USER CODE END AT_pwm1_get_2 */
+}
+
+ATEerror_t AT_pwm1_set(const char *param)
+{
+  /* USER CODE BEGIN AT_pwm1_set_1 */
+
+  /* USER CODE END AT_pwm1_set_1 */
+  uint32_t duty_cycle = 0;
+  const char *buf = param;
+
+  if (tiny_sscanf(buf, "%lu", &duty_cycle) != 1)
+  {
+    return AT_PARAM_ERROR;
+  }
+
+  if (PWM_SetDutyCycle(PWM_CHANNEL_1, duty_cycle) != PWM_OK)
+  {
+    return AT_PARAM_ERROR;
+  }
+
+  return AT_OK;
+
+  /* USER CODE BEGIN AT_pwm1_set_2 */
+
+  /* USER CODE END AT_pwm1_set_2 */
+}
+
+ATEerror_t AT_pwm2_get(const char *param)
+{
+  /* USER CODE BEGIN AT_pwm2_get_1 */
+
+  /* USER CODE END AT_pwm2_get_1 */
+  uint32_t duty_cycle = 0;
+
+  if (PWM_GetDutyCycle(PWM_CHANNEL_2, &duty_cycle) == PWM_OK)
+  {
+    AT_PRINTF("+PWM2:%lu\r\n", duty_cycle);
+    return AT_OK;
+  }
+  else
+  {
+    return AT_ERROR;
+  }
+
+  /* USER CODE BEGIN AT_pwm2_get_2 */
+
+  /* USER CODE END AT_pwm2_get_2 */
+}
+
+ATEerror_t AT_pwm2_set(const char *param)
+{
+  /* USER CODE BEGIN AT_pwm2_set_1 */
+
+  /* USER CODE END AT_pwm2_set_1 */
+  uint32_t duty_cycle = 0;
+  const char *buf = param;
+
+  if (tiny_sscanf(buf, "%lu", &duty_cycle) != 1)
+  {
+    return AT_PARAM_ERROR;
+  }
+
+  if (PWM_SetDutyCycle(PWM_CHANNEL_2, duty_cycle) != PWM_OK)
+  {
+    return AT_PARAM_ERROR;
+  }
+
+  return AT_OK;
+
+  /* USER CODE BEGIN AT_pwm2_set_2 */
+
+  /* USER CODE END AT_pwm2_set_2 */
 }
 
 /* USER CODE BEGIN PrFD */

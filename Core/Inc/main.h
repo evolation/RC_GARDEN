@@ -80,6 +80,10 @@ void Error_Handler(void);
 #define USARTx_RX_GPIO_Port GPIOA
 #define USARTx_TX_Pin GPIO_PIN_2
 #define USARTx_TX_GPIO_Port GPIOA
+#define PWM1_Pin GPIO_PIN_8
+#define PWM1_GPIO_Port GPIOA
+#define PWM2_Pin GPIO_PIN_9
+#define PWM2_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
