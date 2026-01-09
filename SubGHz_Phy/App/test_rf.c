@@ -46,7 +46,8 @@
 #define P_22dBm                       22
 #define SF12                          12
 #define CR4o5                         1
-#define EMISSION_POWER                P_14dBm
+#define CR4o8                         4      /* Enhanced error correction (4/8) */
+#define EMISSION_POWER                P_22dBm /* Optimized: Maximum TX power for 2-way link */
 #define CONTINUOUS_TIMEOUT           0xFFFF
 #define LORA_PREAMBLE_LENGTH          8         /* Same for Tx and Rx */
 #define LORA_SYMBOL_TIMEOUT           30        /* Symbols */
@@ -64,6 +65,8 @@
 #define DEFAULT_LDR_OPT               2
 #define DEFAULT_FSK_DEVIATION         25000
 #define DEFAULT_GAUSS_BT              3 /*Lora default in legacy*/
+#define DEFAULT_LNA_ENABLED           1 /* Optimized: Enable Low Noise Amplifier (+10dB) */
+#define DEFAULT_PABOOST_ENABLED       1 /* Optimized: Enable PA Boost for higher TX power */
 
 /* USER CODE BEGIN PD */
 
@@ -77,7 +80,21 @@
 /* Private variables ---------------------------------------------------------*/
 static uint8_t TestState = 0;
 
-static testParameter_t testParam = { TEST_LORA, F_868MHz, EMISSION_POWER, BW_125kHz, SF12, CR4o5, 0, 0, DEFAULT_PAYLOAD_LEN, DEFAULT_FSK_DEVIATION, DEFAULT_LDR_OPT, DEFAULT_GAUSS_BT};
+/* Optimized for maximum receive distance with RC_GUARD PWM signals */
+static testParameter_t testParam = {
+    TEST_LORA,                      /* Modulation: LoRa (best range) */
+    F_868MHz,                       /* Frequency: 868 MHz EU ISM band */
+    EMISSION_POWER,                 /* TX Power: 22 dBm (optimized for 2-way link) */
+    BW_125kHz,                      /* Bandwidth: 125 kHz (balanced sensitivity/speed) */
+    SF12,                           /* Spreading Factor: 12 (maximum range) */
+    CR4o8,                          /* Coding Rate: 4/8 (enhanced error correction) */
+    DEFAULT_LNA_ENABLED,            /* LNA: Enabled (+10dB frontend gain) */
+    DEFAULT_PABOOST_ENABLED,        /* PA Boost: Enabled (supports 22 dBm TX) */
+    DEFAULT_PAYLOAD_LEN,            /* Payload: 16 bytes */
+    DEFAULT_FSK_DEVIATION,          /* FSK Dev: 25 kHz (N/A for LoRa) */
+    DEFAULT_LDR_OPT,                /* Low Data Rate Opt: Auto for SF12 */
+    DEFAULT_GAUSS_BT                /* BT Product: 3 (N/A for LoRa) */
+};
 
 static __IO uint32_t RadioTxDone_flag = 0;
 static __IO uint32_t RadioTxTimeout_flag = 0;

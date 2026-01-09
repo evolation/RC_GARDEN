@@ -135,6 +135,12 @@ int32_t TST_get_config(testParameter_t *Param);
   */
 int32_t TST_stop(void);
 
+/**
+  * @brief Initialize radio in continuous RX mode for maximum reception
+  * @retval status 0 ok, -1 ko
+  */
+int32_t TST_RX_Continuous_Start(void);
+
 /* USER CODE BEGIN EFP */
 
 /* USER CODE END EFP */

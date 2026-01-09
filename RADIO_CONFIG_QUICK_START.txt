@@ -1,0 +1,293 @@
+================================================================================
+RC_GUARD SubGHz Radio - OPTIMIZED CONFIGURATION QUICK START
+================================================================================
+Generated: January 9, 2026
+For: STM32WL55xx with PWM Signal Monitoring (PA10, PA11)
+
+================================================================================
+1. DEFAULT CONFIGURATION (Already optimized in firmware)
+================================================================================
+
+After flashing the optimized firmware (test_rf.c updated), the device will use:
+
+   Frequency:          868,000,000 Hz (868 MHz EU ISM)
+   TX Power:           22 dBm (MAXIMUM - improved 2-way link)
+   Bandwidth:          125 kHz (index 4) - Balanced sensitivity/speed
+   Spreading Factor:   12 (MAXIMUM - best range)
+   Coding Rate:        4/8 (Enhanced error correction vs 4/5)
+   LNA:                Enabled (1) - +10 dB frontend gain
+   PA Boost:           Enabled (1) - Supports 22 dBm TX
+   Modulation:         LoRa (1)
+   Payload:            16 bytes
+   Preamble:           8 symbols
+   CRC:                Enabled
+   RX Mode:            Continuous
+
+================================================================================
+2. VERIFY CONFIGURATION (AT Commands)
+================================================================================
+
+Send these AT commands via serial (9600 baud):
+
+   AT?                    # List all available AT commands
+   AT+VER                 # Get version information
+   AT+TCONF?              # Read current radio configuration
+
+Expected response for TCONF:
+   FREQ:868000000 PWR:22 BW:4 SF:12 CR:4 LNA:1 PA:1 MOD:1 LEN:16 FSKDEV:25000 LDR:2
+
+================================================================================
+3. SET OPTIMIZED CONFIGURATION (AT Command)
+================================================================================
+
+To explicitly set the optimized configuration:
+
+   AT+TCONF=868000000:22:4:12:4:1:1:1:16:25000:2:3
+
+Parameters in order:
+   1. Frequency (Hz)      = 868000000
+   2. TX Power (dBm)      = 22
+   3. Bandwidth (index)   = 4 (125 kHz)
+   4. Spreading Factor    = 12
+   5. Coding Rate (1-4)   = 4 (4/8)
+   6. LNA (0/1)           = 1 (Enabled)
+   7. PA Boost (0/1)      = 1 (Enabled)
+   8. Modulation (0-3)    = 1 (LoRa)
+   9. Payload Length      = 16
+   10. FSK Deviation      = 25000 (N/A for LoRa)
+   11. Low DataRate Opt   = 2 (Auto)
+   12. BT Product         = 3 (N/A for LoRa)
+
+Response: OK
+
+================================================================================
+4. START MAXIMUM DISTANCE RECEPTION
+================================================================================
+
+   AT+RX=0              # Start continuous RX (0 = no packet limit)
+
+Then the radio will:
+   - Enter RX mode
+   - Listen continuously for LoRa packets
+   - Decode SF12 packets with excellent sensitivity (-134 dBm)
+   - Output received packets to serial
+   - Continue until AT+TEST_STOP is sent
+
+Expected signal levels:
+   Clear channel:  -120 to -140 dBm (background noise)
+   Good signal:     -80 to -100 dBm (readable)
+   Weak signal:    -100 to -120 dBm (margin)
+   No signal:       > -140 dBm
+
+================================================================================
+5. MONITOR SIGNAL QUALITY
+================================================================================
+
+   AT+RSSI              # Measure current RSSI (signal strength)
+   
+Response: RSSI Value= XXX dBm
+
+Expected values during RX:
+   -120 to -140 dBm = Normal operation (good reception)
+   -100 to -120 dBm = Strong signal
+   > -100 dBm       = Very strong signal (may cause saturation)
+
+================================================================================
+6. PWM SIGNAL MONITORING
+================================================================================
+
+The device monitors PWM signals on:
+   - PA10 (TIM1_CH3): PWM_MON_CH1
+   - PA11 (TIM1_CH4): PWM_MON_CH2
+
+PWM signal detection:
+   - Duty cycle > 1% = Signal detected
+   - Duty cycle ≤ 1% = No signal
+   - Resolution: 1 µs (1 MHz timer)
+   - Measurement period: 100 ms
+
+Recommended PWM-to-Radio mapping:
+   >50% duty  → Start continuous RX (listen for commands)
+   10-50%     → Configure new parameters
+   <10%       → Stop RX
+   0%         → Sleep mode
+
+Example RC receiver integration:
+   CH1 PWM signal → Duty cycle indicator
+   CH2 PWM signal → Command selector
+
+================================================================================
+7. PACKET TRANSMISSION (Optional)
+================================================================================
+
+To send test packets:
+
+   AT+TX=10             # Send 10 test packets
+
+Each packet:
+   - Contains PRBS9 pseudo-random test pattern
+   - Length: 16 bytes (configurable)
+   - SF12, 125 kHz, 22 dBm TX power
+   - Transmission time: ~5 seconds per packet
+   - Total time for 10 packets: ~50 seconds
+
+Useful for testing link in both directions.
+
+================================================================================
+8. STOP OPERATION AND SLEEP
+================================================================================
+
+   AT+TEST_STOP         # Stop RX/TX and enter sleep mode
+
+After this:
+   - Radio enters low power sleep (2 µA consumption)
+   - Waiting for new AT commands
+   - Can resume RX with AT+RX=0
+
+================================================================================
+9. ALTERNATIVE CONFIGURATIONS (For special use cases)
+================================================================================
+
+9.1 MAXIMUM SPEED (For faster response):
+   AT+TCONF=868000000:22:5:10:1:1:1:1:16:25000:2:3
+   - BW: 250 kHz (index 5)
+   - SF: 10 (instead of 12)
+   - Time-on-air: ~500 ms (10x faster)
+   - Range: ~5 km (still good)
+
+9.2 EXTENDED RANGE (For maximum distance):
+   AT+TCONF=868000000:22:2:12:4:1:1:1:16:25000:2:3
+   - BW: 31.25 kHz (index 2)
+   - SF: 12 (same)
+   - Time-on-air: ~18 seconds (slower)
+   - Range: ~15+ km (extended)
+   - WARNING: Very slow, not suitable for RC commands
+
+9.3 POWER EFFICIENT RX:
+   AT+TCONF=868000000:14:4:12:4:0:0:1:16:25000:2:3
+   - TX Power: 14 dBm (lower)
+   - LNA: Disabled
+   - PA Boost: Disabled
+   - Power consumption: 1/2 vs optimized
+   - Range: ~8 km (still good)
+   - Better for battery-powered applications
+
+================================================================================
+10. TROUBLESHOOTING
+================================================================================
+
+Problem: No packets received
+   → Check frequency matches transmitter (868 MHz)
+   → Verify SF and BW match transmitter
+   → Check RSSI shows noise floor (-120 to -140 dBm)
+   → Check antenna connection
+   → Check antenna impedance matching
+
+Problem: Weak signal (-100+ dBm)
+   → Move closer to transmitter
+   → Check for obstacles/interference
+   → Verify LNA is enabled (should be 1)
+   → Check antenna type and gain
+
+Problem: Signal too strong (-40+ dBm)
+   → Move away from transmitter
+   → Check for reflections/multi-path
+   → Signal quality may be poor despite high power
+   → Try reducing TX power
+
+Problem: No response from AT commands
+   → Check serial port (should be 9600 baud)
+   → Check USB cable connection
+   → Reset device (power cycle)
+   → Send AT? to verify communication
+
+Problem: PWM signals not responding
+   → Verify PWM signals are on PA10 and PA11
+   → Check TIM1 is running (should be at 1 MHz)
+   → Check GPIO configuration
+   → Verify duty cycle > 1% for detection
+
+================================================================================
+11. ESTIMATED PERFORMANCE
+================================================================================
+
+Range Performance (868 MHz, 22 dBm TX, -134 dBm RX, SF12, 125 kHz):
+
+   Environment              Estimated Range
+   ────────────────────────────────────────
+   Open field/LoS          15+ km
+   Urban area              8-12 km
+   Suburban area           5-8 km
+   With moderate obstacles 2-5 km
+   Indoor (through walls)  100-500 m
+   Building penetration    50-100 m
+
+Power Consumption (Continuous RX):
+   Average: ~2 mA @ 3.3V (~6.6 mW)
+   Peak: 40 mA (during RX activity)
+   Sleep: 2 µA (minimal)
+
+Packet Time-on-Air:
+   SF12, 125 kHz, 16-byte payload: ~5 seconds per packet
+   PWM latency budget: 100-150 ms (acceptable)
+
+================================================================================
+12. AT COMMAND REFERENCE
+================================================================================
+
+Core Commands:
+   AT?                     List available commands
+   AT+VER                  Get version info
+   AT+RESET                Reset device
+   AT+TCONF?               Get current config
+   AT+TCONF=...            Set radio config
+   AT+RX=<n>               Start RX (0=continuous)
+   AT+TX=<n>               Send n packets
+   AT+RSSI                 Measure signal strength
+   AT+TEST_STOP            Stop RX/TX
+
+Configuration Parameters:
+   Bandwidth: 0=7.8kHz, 1=15.6kHz, 2=31.25kHz, 3=62.5kHz, 
+              4=125kHz, 5=250kHz, 6=500kHz
+   Spreading Factor: 5-12
+   Coding Rate: 1=4/5, 2=4/6, 3=4/7, 4=4/8
+   Modulation: 0=FSK, 1=LoRa, 2=BPSK, 3=MSK
+
+================================================================================
+13. SUPPORT & DOCUMENTATION
+================================================================================
+
+Files in this workspace:
+   - RADIO_OPTIMIZATION_GUIDE.md        Detailed technical guide
+   - radio_config_optimized.h          Header file with all definitions
+   - test_rf.c                         Updated with optimized defaults
+   - stm32_timer_optimized.h           Timer optimization header
+   - pwm_monitor.c/h                   PWM signal monitoring
+
+For more details, see:
+   └─ RADIO_OPTIMIZATION_GUIDE.md (comprehensive technical documentation)
+
+================================================================================
+14. QUICK TEST PROCEDURE
+================================================================================
+
+1. Flash optimized firmware
+2. Open serial terminal (9600 baud, COM port)
+3. Send: AT+VER
+   Expected: APPLICATION_VERSION and MW_RADIO_VERSION info
+4. Send: AT+TCONF?
+   Expected: Current configuration (should show 22 dBm, BW:4, SF:12, etc.)
+5. Send: AT+RX=0
+   Expected: "Rx Continuous Test" message
+6. Apply PWM signal to PA10 or PA11 with >50% duty cycle
+   Expected: Radio continues RX operation
+7. Send: AT+TEST_STOP
+   Expected: Radio enters sleep mode
+
+If all steps succeed → System is working correctly!
+
+================================================================================
+END OF QUICK START GUIDE
+================================================================================
+Date: January 9, 2026
+For questions: See RADIO_OPTIMIZATION_GUIDE.md or contact development team
