@@ -29,6 +29,7 @@
       "cwd": "${workspaceFolder}",
       "executable": "${workspaceFolder}/build/SubGHz_Phy_AT_Slave.elf",
       "svdFile": "${workspaceFolder}/STM32WLE5_CM4.svd",
+      "gdbPath": "/home/integreedy/workspace/RC_GUARD/gcc-arm-none-eabi-linux-x64/bin/arm-none-eabi-gdb",
       "preLaunchTask": "Build",
       "swoConfig": {
         "enabled": false
