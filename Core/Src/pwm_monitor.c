@@ -78,6 +78,8 @@ PWM_MON_Status_t PWM_MON_Init(void)
   GPIO_InitTypeDef GPIO_InitStruct = {0};
   TIM_IC_InitTypeDef sConfigIC = {0};
 
+  timer_overflows = 0;
+
   /* Enable GPIOA clock */
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
@@ -117,6 +119,10 @@ PWM_MON_Status_t PWM_MON_Init(void)
   /* Start input capture on both channels */
   HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);  /* CH3 = PA10 */
   HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_4);  /* CH4 = PA11 */
+
+  /* Enable TIM1 update interrupt for overflow tracking */
+  __HAL_TIM_CLEAR_FLAG(&htim1, TIM_FLAG_UPDATE);
+  __HAL_TIM_ENABLE_IT(&htim1, TIM_IT_UPDATE);
 
   return PWM_MON_OK;
 }
@@ -253,6 +259,7 @@ void PWM_MON_InputCapture_Callback(uint32_t channel, uint32_t capture_value)
 {
   PWM_MON_Channel_t ch;
   uint32_t pulse_ticks;
+  uint32_t period_ticks;
 
   /* Map HAL channel to monitor channel */
   if (channel == TIM_CHANNEL_3)
@@ -292,8 +299,17 @@ void PWM_MON_InputCapture_Callback(uint32_t channel, uint32_t capture_value)
       pwm_mon_states[ch].edge_state = 0;  /* Waiting for next rising edge */
 
       /* Calculate pulse width and duty cycle */
-      pulse_ticks = pwm_mon_states[ch].falling_edge_ticks - 
-                    pwm_mon_states[ch].rising_edge_ticks;
+      period_ticks = __HAL_TIM_GET_AUTORELOAD(&htim1) + 1U;
+      if (pwm_mon_states[ch].falling_edge_ticks >= pwm_mon_states[ch].rising_edge_ticks)
+      {
+        pulse_ticks = pwm_mon_states[ch].falling_edge_ticks -
+                      pwm_mon_states[ch].rising_edge_ticks;
+      }
+      else
+      {
+        pulse_ticks = (period_ticks - pwm_mon_states[ch].rising_edge_ticks) +
+                      pwm_mon_states[ch].falling_edge_ticks;
+      }
 
       if (pulse_ticks > 0 && pulse_ticks < 500000)  /* 0.5 second max */
       {
@@ -340,7 +356,8 @@ static void PWM_MON_ProcessChannel(PWM_MON_Channel_t ch)
  */
 static inline uint32_t GetTimerValue(void)
 {
-  return LL_TIM_GetCounter(TIM1) + (timer_overflows << 16);
+  uint32_t period_ticks = __HAL_TIM_GET_AUTORELOAD(&htim1) + 1U;
+  return (timer_overflows * period_ticks) + LL_TIM_GetCounter(TIM1);
 }
 
 /**
@@ -361,16 +378,15 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
   if (htim->Instance == TIM1)
   {
-    /* Get which channel triggered the capture */
-    if (__HAL_TIM_GET_FLAG(htim, TIM_FLAG_CC3))
+    /* HAL_TIM_IRQHandler sets htim->Channel to the active channel */
+    if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_3)
     {
-      PWM_MON_InputCapture_Callback(TIM_CHANNEL_3, 
+      PWM_MON_InputCapture_Callback(TIM_CHANNEL_3,
                                     HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_3));
     }
-
-    if (__HAL_TIM_GET_FLAG(htim, TIM_FLAG_CC4))
+    else if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_4)
     {
-      PWM_MON_InputCapture_Callback(TIM_CHANNEL_4, 
+      PWM_MON_InputCapture_Callback(TIM_CHANNEL_4,
                                     HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_4));
     }
   }
@@ -388,6 +404,10 @@ void HAL_TIM_IC_MspInit(TIM_HandleTypeDef *htim)
     /* Just ensure capture/compare interrupt is enabled */
     HAL_NVIC_SetPriority(TIM1_CC_IRQn, 1, 0);
     HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
+
+    /* Enable update interrupt for overflow handling */
+    HAL_NVIC_SetPriority(TIM1_UP_IRQn, 1, 0);
+    HAL_NVIC_EnableIRQ(TIM1_UP_IRQn);
   }
 }
 
@@ -402,6 +422,7 @@ void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef *htim)
     /* Don't disable TIM1 clock - it's still used by PWM output */
     /* Only disable capture/compare interrupt if needed */
     HAL_NVIC_DisableIRQ(TIM1_CC_IRQn);
+    HAL_NVIC_DisableIRQ(TIM1_UP_IRQn);
   }
 }
 
