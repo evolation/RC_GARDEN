@@ -19,7 +19,7 @@
       }
     },
     {
-      "name": "NUCLEO (stlink)",
+      "name": "NUCLEO (stlink) Linux",
       "type": "cortex-debug",
       "request": "launch",
 
@@ -51,6 +51,23 @@
       }
       // Optional, if you have an SVD:
       // "svdFile": "${workspaceFolder}/STM32WL55_CM4.svd"
+    },
+    {
+      "name": "WIN NUCLEO-WL55 (stlink auto)",
+      "type": "cortex-debug",
+      "request": "launch",
+      "servertype": "stlink",
+      "executable": "C:/D_DRIVE_BACKUP/workspace/RC_GUARD/SubGHz_Phy_AT_Slave/build/SubGHz_Phy_AT_Slave.elf",
+      "device": "STM32WL55JC",
+      "cwd": "C:/D_DRIVE_BACKUP/workspace/RC_GUARD/SubGHz_Phy_AT_Slave",
+      "interface": "swd",
+      "runToEntryPoint": "main",
+      "armToolchainPath": "C:/D_DRIVE_BACKUP/workspace/RC_GUARD/gcc-arm-none-eabi-10.3-2021.10-win32/bin",
+      "toolchainPrefix": "arm-none-eabi",
+      "gdbPath": "C:/D_DRIVE_BACKUP/workspace/RC_GUARD/gcc-arm-none-eabi-10.3-2021.10-win32/bin/arm-none-eabi-gdb.exe",
+
+      "showDevDebugOutput": "raw",
+      "swoConfig": { "enabled": false }
     }
   ]
 }
