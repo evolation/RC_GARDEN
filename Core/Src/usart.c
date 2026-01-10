@@ -26,7 +26,6 @@
 
 UART_HandleTypeDef hlpuart1;
 DMA_HandleTypeDef hdma_lpuart1_tx;
-uint8_t charRx;
 
 /* LPUART1 init function */
 
@@ -170,13 +169,5 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
 /* USER CODE BEGIN 1 */
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-  if (huart->Instance == LPUART1)
-  {
-    /* Re-start RX for next character */
-    HAL_UART_Receive_IT(huart, &charRx, 1);
-  }
-}
 
 /* USER CODE END 1 */
