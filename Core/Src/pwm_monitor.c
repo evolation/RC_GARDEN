@@ -89,6 +89,12 @@ PWM_MON_Status_t PWM_MON_Init(void)
   GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;  /* TIM1_CH3 and TIM1_CH4 */
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /* Ensure TIM1 IC MSP init runs so CC interrupts are enabled */
+  if (HAL_TIM_IC_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
   /* TIM1 is already initialized by PWM_Init(), just configure input capture channels */
 
   /* Configure Input Capture for Channel 3 (PA10) */
