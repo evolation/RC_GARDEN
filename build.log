@@ -1,0 +1,48 @@
+mkdir build		
+arm-none-eabi-gcc -c -mcpu=cortex-m4 -mthumb   -DCORE_CM4 -DUSE_HAL_DRIVER -DSTM32WL55xx -ICore/Inc -ISubGHz_Phy/App -ISubGHz_Phy/Target -IUtilities/trace/adv_trace -IDrivers/STM32WLxx_HAL_Driver/Inc -IDrivers/STM32WLxx_HAL_Driver/Inc/Legacy -IUtilities/misc -IUtilities/sequencer -IUtilities/timer -IUtilities/lpm/tiny_lpm -IDrivers/CMSIS/Device/ST/STM32WLxx/Include -IMiddlewares/Third_Party/SubGHz_Phy -IMiddlewares/Third_Party/SubGHz_Phy/stm32_radio_driver -IDrivers/CMSIS/Include -IDrivers/BSP/STM32WLxx_Nucleo -Og -Wall -fdata-sections -ffunction-sections -g -gdwarf-2 -MMD -MP -MF"build/main.d" -Wa,-a,-ad,-alms=build/main.lst Core/Src/main.c -o build/main.o
+arm-none-eabi-gcc -c -mcpu=cortex-m4 -mthumb   -DCORE_CM4 -DUSE_HAL_DRIVER -DSTM32WL55xx -ICore/Inc -ISubGHz_Phy/App -ISubGHz_Phy/Target -IUtilities/trace/adv_trace -IDrivers/STM32WLxx_HAL_Driver/Inc -IDrivers/STM32WLxx_HAL_Driver/Inc/Legacy -IUtilities/misc -IUtilities/sequencer -IUtilities/timer -IUtilities/lpm/tiny_lpm -IDrivers/CMSIS/Device/ST/STM32WLxx/Include -IMiddlewares/Third_Party/SubGHz_Phy -IMiddlewares/Third_Party/SubGHz_Phy/stm32_radio_driver -IDrivers/CMSIS/Include -IDrivers/BSP/STM32WLxx_Nucleo -Og -Wall -fdata-sections -ffunction-sections -g -gdwarf-2 -MMD -MP -MF"build/gpio.d" -Wa,-a,-ad,-alms=build/gpio.lst Core/Src/gpio.c -o build/gpio.o
+arm-none-eabi-gcc -c -mcpu=cortex-m4 -mthumb   -DCORE_CM4 -DUSE_HAL_DRIVER -DSTM32WL55xx -ICore/Inc -ISubGHz_Phy/App -ISubGHz_Phy/Target -IUtilities/trace/adv_trace -IDrivers/STM32WLxx_HAL_Driver/Inc -IDrivers/STM32WLxx_HAL_Driver/Inc/Legacy -IUtilities/misc -IUtilities/sequencer -IUtilities/timer -IUtilities/lpm/tiny_lpm -IDrivers/CMSIS/Device/ST/STM32WLxx/Include -IMiddlewares/Third_Party/SubGHz_Phy -IMiddlewares/Third_Party/SubGHz_Phy/stm32_radio_driver -IDrivers/CMSIS/Include -IDrivers/BSP/STM32WLxx_Nucleo -Og -Wall -fdata-sections -ffunction-sections -g -gdwarf-2 -MMD -MP -MF"build/pwm_if.d" -Wa,-a,-ad,-alms=build/pwm_if.lst Core/Src/pwm_if.c -o build/pwm_if.o
+arm-none-eabi-gcc -c -mcpu=cortex-m4 -mthumb   -DCORE_CM4 -DUSE_HAL_DRIVER -DSTM32WL55xx -ICore/Inc -ISubGHz_Phy/App -ISubGHz_Phy/Target -IUtilities/trace/adv_trace -IDrivers/STM32WLxx_HAL_Driver/Inc -IDrivers/STM32WLxx_HAL_Driver/Inc/Legacy -IUtilities/misc -IUtilities/sequencer -IUtilities/timer -IUtilities/lpm/tiny_lpm -IDrivers/CMSIS/Device/ST/STM32WLxx/Include -IMiddlewares/Third_Party/SubGHz_Phy -IMiddlewares/Third_Party/SubGHz_Phy/stm32_radio_driver -IDrivers/CMSIS/Include -IDrivers/BSP/STM32WLxx_Nucleo -Og -Wall -fdata-sections -ffunction-sections -g -gdwarf-2 -MMD -MP -MF"build/pwm_monitor.d" -Wa,-a,-ad,-alms=build/pwm_monitor.lst Core/Src/pwm_monitor.c -o build/pwm_monitor.o
+Core/Src/pwm_if.c:59:26: error: static declaration of 'htim1' follows non-static declaration
+   59 | static TIM_HandleTypeDef htim1;
+      |                          ^~~~~
+In file included from Core/Src/pwm_if.c:23:
+Core/Inc/pwm_if.h:60:26: note: previous declaration of 'htim1' was here
+   60 | extern TIM_HandleTypeDef htim1;
+      |                          ^~~~~
+make: *** [Makefile:237: build/pwm_if.o] Error 1
+make: *** Waiting for unfinished jobs....
+Core/Src/pwm_monitor.c: In function 'PWM_MON_SendResponse':
+Core/Src/pwm_monitor.c:223:32: warning: format '%u' expects argument of type 'unsigned int', but argument 5 has type 'uint32_t' {aka 'const long unsigned int'} [-Wformat=]
+  223 |                    "+PWM,CH%u,%u%%,%u.%uus\r\n",
+      |                               ~^
+      |                                |
+      |                                unsigned int
+      |                               %lu
+  224 |                    channel + 1,
+  225 |                    data->duty_cycle,
+      |                    ~~~~~~~~~~~~~~~~
+      |                        |
+      |                        uint32_t {aka const long unsigned int}
+Core/Src/pwm_monitor.c:223:37: warning: format '%u' expects argument of type 'unsigned int', but argument 6 has type 'long unsigned int' [-Wformat=]
+  223 |                    "+PWM,CH%u,%u%%,%u.%uus\r\n",
+      |                                    ~^
+      |                                     |
+      |                                     unsigned int
+      |                                    %lu
+......
+  226 |                    data->pulse_width_us / 1000,
+      |                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                         |
+      |                                         long unsigned int
+Core/Src/pwm_monitor.c:223:40: warning: format '%u' expects argument of type 'unsigned int', but argument 7 has type 'long unsigned int' [-Wformat=]
+  223 |                    "+PWM,CH%u,%u%%,%u.%uus\r\n",
+      |                                       ~^
+      |                                        |
+      |                                        unsigned int
+      |                                       %lu
+......
+  227 |                    data->pulse_width_us % 1000);
+      |                    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                         |
+      |                                         long unsigned int

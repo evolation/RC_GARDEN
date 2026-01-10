@@ -27,6 +27,8 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
+#include "stm32wlxx_hal.h"
+#include "stm32wlxx_hal_tim.h"
 
 /* Exported types ------------------------------------------------------------*/
 /**
@@ -50,6 +52,12 @@ typedef enum
 } PWM_Status_t;
 
 /* Exported constants --------------------------------------------------------*/
+
+/* Exported variables --------------------------------------------------------*/
+/**
+ * @brief TIM1 handle (shared with PWM monitor for input capture)
+ */
+extern TIM_HandleTypeDef htim1;
 
 /* Exported macro ------------------------------------------------------------*/
 

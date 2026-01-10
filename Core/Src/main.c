@@ -23,6 +23,7 @@
 #include "pwm_if.h"
 #include "pwm_monitor.h"
 #include "usart.h"
+#include "dma.h"
 #include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
@@ -93,11 +94,16 @@ int main(void)
   PWM_Init();
   PWM_MON_Init();  /* Initialize PWM input monitor */
   MX_SubGHz_Phy_Init();
+  MX_DMA_Init();
   /* USER CODE BEGIN 2 */
 
   /* Initialize LPUART1 for debug output */
   MX_LPUART1_UART_Init();
-  
+
+  /* Start RX on LPUART1 */
+  extern uint8_t charRx;
+  HAL_UART_Receive_IT(&hlpuart1, &charRx, 1);
+
   /* Send boot message */
   const char *boot_msg = "AT+VER=?\r\n";
   HAL_UART_Transmit(&hlpuart1, (uint8_t *)boot_msg, strlen(boot_msg), 1000);

@@ -54,9 +54,10 @@ typedef struct
 
 /* Private variables ---------------------------------------------------------*/
 /**
- * @brief TIM1 handle for hardware PWM
+ * @brief TIM1 handle for hardware PWM (shared with PWM monitor)
+ * Note: Declared here but exposed via pwm_if.h for use by pwm_monitor.c
  */
-static TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim1;
 
 /**
  * @brief PWM Channel states - using TIM1 channels
