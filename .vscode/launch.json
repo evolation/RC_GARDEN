@@ -19,21 +19,38 @@
       }
     },
     {
-      "name": "Debug RAK3172 (ST-Link)",
+      "name": "NUCLEO (stlink)",
       "type": "cortex-debug",
       "request": "launch",
-      "servertype": "stlink",
-      "device": "STM32WL55CC_M4",
-      "interface": "swd",
-      "runToEntryPoint": "main",
+
       "cwd": "${workspaceFolder}",
       "executable": "${workspaceFolder}/build/SubGHz_Phy_AT_Slave.elf",
+
+      "servertype": "openocd",
+      "serverpath": "/usr/local/bin/openocd",
+
+      // Prefer the board file if present:
+    //   "configFiles": [
+    //     "board/stm32wl55jc_nucleo.cfg"
+    //   ],
+
+      // If the board file doesn't exist, instead use:
+      "configFiles": [
+        "interface/stlink.cfg",
+        "target/stm32wlx.cfg"
+      ],
+
+      "device": "STM32WL55JC",       // correct family for this Nucleo
+      "runToEntryPoint": "main",
+      "interface": "swd",
       "svdFile": "${workspaceFolder}/STM32WLE5_CM4.svd",
       "gdbPath": "/home/integreedy/workspace/RC_GUARD/gcc-arm-none-eabi-linux-x64/bin/arm-none-eabi-gdb",
       "preLaunchTask": "Build",
       "swoConfig": {
         "enabled": false
       }
+      // Optional, if you have an SVD:
+      // "svdFile": "${workspaceFolder}/STM32WL55_CM4.svd"
     }
   ]
 }
