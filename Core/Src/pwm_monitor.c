@@ -224,7 +224,7 @@ void PWM_MON_SendResponse(PWM_MON_Channel_t channel, const PWM_MON_Data_t *data)
   }
 
   /* Send via USART */
-  HAL_UART_Transmit(&huart2, (uint8_t *)response, len, 100);
+  HAL_UART_Transmit(&hlpuart1, (uint8_t *)response, len, 100);
 }
 
 /**

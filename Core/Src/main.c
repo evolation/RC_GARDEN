@@ -22,6 +22,8 @@
 #include "gpio.h"
 #include "pwm_if.h"
 #include "pwm_monitor.h"
+#include "usart.h"
+#include <string.h>
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -92,6 +94,13 @@ int main(void)
   PWM_MON_Init();  /* Initialize PWM input monitor */
   MX_SubGHz_Phy_Init();
   /* USER CODE BEGIN 2 */
+
+  /* Initialize LPUART1 for debug output */
+  MX_LPUART1_UART_Init();
+  
+  /* Send boot message */
+  const char *boot_msg = "AT+VER=?\r\n";
+  HAL_UART_Transmit(&hlpuart1, (uint8_t *)boot_msg, strlen(boot_msg), 1000);
 
   /* USER CODE END 2 */
 
