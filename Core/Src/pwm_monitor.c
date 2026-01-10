@@ -38,6 +38,7 @@ typedef struct
   uint32_t duty_cycle;           /**< Calculated duty cycle % */
   bool signal_detected;          /**< Signal present flag */
   bool was_detected;             /**< Previous signal state */
+  uint32_t previous_duty_cycle;  /**< Previous duty cycle for change detection */
   uint32_t last_update_ticks;    /**< Last measurement time */
   uint8_t edge_state;            /**< 0=waiting rising, 1=waiting falling */
 } PWM_MON_State_t;
@@ -48,8 +49,8 @@ typedef struct
  * @brief PWM Monitor states for each channel
  */
 static PWM_MON_State_t pwm_mon_states[PWM_MON_MAX] = {
-  {.rising_edge_ticks = 0, .falling_edge_ticks = 0, .edge_state = 0, .signal_detected = false},
-  {.rising_edge_ticks = 0, .falling_edge_ticks = 0, .edge_state = 0, .signal_detected = false}
+  {.rising_edge_ticks = 0, .falling_edge_ticks = 0, .edge_state = 0, .signal_detected = false, .previous_duty_cycle = 0},
+  {.rising_edge_ticks = 0, .falling_edge_ticks = 0, .edge_state = 0, .signal_detected = false, .previous_duty_cycle = 0}
 };
 
 /**
@@ -83,21 +84,13 @@ PWM_MON_Status_t PWM_MON_Init(void)
   /* Enable GPIOA clock */
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
-  /* Configure PA10 and PA11 as input capture (floating input) */
+  /* Configure GPIO pins PA10 and PA11 as input capture alternate function */
   GPIO_InitStruct.Pin = GPIO_PIN_10 | GPIO_PIN_11;
   GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-  GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;  /* TIM1_CH3 and TIM1_CH4 */
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /* Ensure TIM1 IC MSP init runs so CC interrupts are enabled */
-  if (HAL_TIM_IC_Init(&htim1) != HAL_OK)
-  {
-    Error_Handler();
-  }
-
-  /* TIM1 is already initialized by PWM_Init(), just configure input capture channels */
 
   /* Configure Input Capture for Channel 3 (PA10) */
   sConfigIC.ICPolarity = TIM_ICPOLARITY_BOTHEDGE;  /* Both rising and falling */
@@ -115,6 +108,10 @@ PWM_MON_Status_t PWM_MON_Init(void)
   {
     Error_Handler();
   }
+
+  /* Enable TIM1 capture/compare interrupt in NVIC */
+  HAL_NVIC_SetPriority(TIM1_CC_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
 
   /* Start input capture on both channels */
   HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_3);  /* CH3 = PA10 */
@@ -205,10 +202,25 @@ void PWM_MON_Process(void)
   {
     PWM_MON_ProcessChannel((PWM_MON_Channel_t)ch);
 
-    /* Check for signal state change */
-    if (pwm_mon_states[ch].signal_detected != pwm_mon_states[ch].was_detected)
+    bool signal_changed = pwm_mon_states[ch].signal_detected != pwm_mon_states[ch].was_detected;
+    bool duty_changed = false;
+
+    /* Check for duty cycle change (threshold: 2% to avoid noise) */
+    if (pwm_mon_states[ch].signal_detected)
     {
-      /* Signal state changed - send unsolicited response */
+      uint32_t duty_diff = (pwm_mon_states[ch].duty_cycle > pwm_mon_states[ch].previous_duty_cycle) ?
+                           (pwm_mon_states[ch].duty_cycle - pwm_mon_states[ch].previous_duty_cycle) :
+                           (pwm_mon_states[ch].previous_duty_cycle - pwm_mon_states[ch].duty_cycle);
+
+      if (duty_diff >= 2)  /* 2% threshold */
+      {
+        duty_changed = true;
+      }
+    }
+
+    /* Send unsolicited response if signal state or duty cycle changed */
+    if (signal_changed || duty_changed)
+    {
       if (PWM_MON_GetData((PWM_MON_Channel_t)ch, &data) == PWM_MON_OK)
       {
         PWM_MON_SendResponse((PWM_MON_Channel_t)ch, &data);
@@ -216,6 +228,7 @@ void PWM_MON_Process(void)
 
       /* Update previous state */
       pwm_mon_states[ch].was_detected = pwm_mon_states[ch].signal_detected;
+      pwm_mon_states[ch].previous_duty_cycle = pwm_mon_states[ch].duty_cycle;
     }
   }
 }
@@ -230,9 +243,9 @@ void PWM_MON_SendResponse(PWM_MON_Channel_t channel, const PWM_MON_Data_t *data)
 
   if (data->signal_detected)
   {
-    /* Format: "+PWM,CH<n>,<duty>%,<period>ms" */
+    /* Format: "+PWM,CH<n>,<duty>%,<pulse>ms" */
     len = snprintf(response, sizeof(response),
-                   "+PWM,CH%u,%u%%,%u.%uus\r\n",
+                   "+PWM,CH%u,%u%%,%u.%ums\r\n",
                    channel + 1,
                    data->duty_cycle,
                    data->pulse_width_us / 1000,
@@ -316,9 +329,18 @@ void PWM_MON_InputCapture_Callback(uint32_t channel, uint32_t capture_value)
         pwm_mon_states[ch].pulse_width_us = pulse_ticks;
 
         /* Mark signal as detected if above threshold */
-        /* Assume 20ms period for servo: duty = pulse / 20000 * 100 */
-        uint32_t estimated_duty = (pulse_ticks * 100) / 20000;
-        pwm_mon_states[ch].duty_cycle = (estimated_duty > 100) ? 100 : estimated_duty;
+        /* Servo PWM mapping: 1.0ms (1000 ticks) = 0%, 2.0ms (2000 ticks) = 100%
+           Formula: duty = (pulse_ticks - 1000) / 10 */
+        if (pulse_ticks >= 1000)
+        {
+          uint32_t estimated_duty = (pulse_ticks - 1000) / 10;
+          pwm_mon_states[ch].duty_cycle = (estimated_duty > 100) ? 100 : estimated_duty;
+        }
+        else
+        {
+          pwm_mon_states[ch].duty_cycle = 0;
+        }
+        
         pwm_mon_states[ch].signal_detected = 
           (pwm_mon_states[ch].duty_cycle > PWM_MON_DUTY_THRESHOLD);
 
@@ -392,38 +414,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
   }
 }
 
-/**
- * @brief HAL TIM1 MSP Initialization for Input Capture
- * Note: TIM1 clock is already enabled by PWM_Init(), just ensure interrupt is enabled
- */
-void HAL_TIM_IC_MspInit(TIM_HandleTypeDef *htim)
-{
-  if (htim->Instance == TIM1)
-  {
-    /* TIM1 clock already enabled by pwm_if.c */
-    /* Just ensure capture/compare interrupt is enabled */
-    HAL_NVIC_SetPriority(TIM1_CC_IRQn, 1, 0);
-    HAL_NVIC_EnableIRQ(TIM1_CC_IRQn);
 
-    /* Enable update interrupt for overflow handling */
-    HAL_NVIC_SetPriority(TIM1_UP_IRQn, 1, 0);
-    HAL_NVIC_EnableIRQ(TIM1_UP_IRQn);
-  }
-}
 
-/**
- * @brief HAL TIM1 MSP Deinitialization
- * Note: Don't disable TIM1 clock as it's still used by PWM output
- */
-void HAL_TIM_IC_MspDeInit(TIM_HandleTypeDef *htim)
-{
-  if (htim->Instance == TIM1)
-  {
-    /* Don't disable TIM1 clock - it's still used by PWM output */
-    /* Only disable capture/compare interrupt if needed */
-    HAL_NVIC_DisableIRQ(TIM1_CC_IRQn);
-    HAL_NVIC_DisableIRQ(TIM1_UP_IRQn);
-  }
-}
 
 /* END OF FILE ---------------------------------------------------------------*/

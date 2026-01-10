@@ -277,38 +277,4 @@ static void PWM_UpdateCompare(PWM_Channel_t channel)
   __HAL_TIM_SET_COMPARE(&htim1, pwm_states[channel].channel, compare_val);
 }
 
-/**
- * @brief HAL TIM1 MSP Initialization (called by HAL_TIM_PWM_Init)
- */
-void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
-{
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-  if (htim->Instance == TIM1)
-  {
-    /* Enable TIM1 clock */
-    __HAL_RCC_TIM1_CLK_ENABLE();
-
-    /* Configure GPIO pins: PA8 (CH1) and PA9 (CH2) as TIM1 outputs */
-    GPIO_InitStruct.Pin = GPIO_PIN_8 | GPIO_PIN_9;
-    GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-    GPIO_InitStruct.Alternate = GPIO_AF1_TIM1;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-  }
-}
-
-/**
- * @brief HAL TIM1 MSP Deinitialization
- */
-void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef *htim)
-{
-  if (htim->Instance == TIM1)
-  {
-    __HAL_RCC_TIM1_CLK_DISABLE();
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_8 | GPIO_PIN_9);
-  }
-}
-
 /* END OF FILE ---------------------------------------------------------------*/
