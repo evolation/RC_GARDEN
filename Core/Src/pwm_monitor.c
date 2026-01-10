@@ -40,6 +40,7 @@ typedef struct
   bool was_detected;             /**< Previous signal state */
   uint32_t previous_duty_cycle;  /**< Previous duty cycle for change detection */
   uint32_t last_update_ticks;    /**< Last measurement time */
+  uint32_t last_checked_ticks;   /**< Last time we checked for changes */
   uint8_t edge_state;            /**< 0=waiting rising, 1=waiting falling */
 } PWM_MON_State_t;
 
@@ -49,8 +50,8 @@ typedef struct
  * @brief PWM Monitor states for each channel
  */
 static PWM_MON_State_t pwm_mon_states[PWM_MON_MAX] = {
-  {.rising_edge_ticks = 0, .falling_edge_ticks = 0, .edge_state = 0, .signal_detected = false, .previous_duty_cycle = 0},
-  {.rising_edge_ticks = 0, .falling_edge_ticks = 0, .edge_state = 0, .signal_detected = false, .previous_duty_cycle = 0}
+  {.rising_edge_ticks = 0, .falling_edge_ticks = 0, .edge_state = 0, .signal_detected = false, .previous_duty_cycle = 0, .last_checked_ticks = 0},
+  {.rising_edge_ticks = 0, .falling_edge_ticks = 0, .edge_state = 0, .signal_detected = false, .previous_duty_cycle = 0, .last_checked_ticks = 0}
 };
 
 /**
@@ -202,33 +203,40 @@ void PWM_MON_Process(void)
   {
     PWM_MON_ProcessChannel((PWM_MON_Channel_t)ch);
 
-    bool signal_changed = pwm_mon_states[ch].signal_detected != pwm_mon_states[ch].was_detected;
-    bool duty_changed = false;
-
-    /* Check for duty cycle change (threshold: 2% to avoid noise) */
-    if (pwm_mon_states[ch].signal_detected)
+    /* Only check for changes if a new measurement has been made */
+    if (pwm_mon_states[ch].last_update_ticks != pwm_mon_states[ch].last_checked_ticks)
     {
-      uint32_t duty_diff = (pwm_mon_states[ch].duty_cycle > pwm_mon_states[ch].previous_duty_cycle) ?
-                           (pwm_mon_states[ch].duty_cycle - pwm_mon_states[ch].previous_duty_cycle) :
-                           (pwm_mon_states[ch].previous_duty_cycle - pwm_mon_states[ch].duty_cycle);
+      bool signal_changed = pwm_mon_states[ch].signal_detected != pwm_mon_states[ch].was_detected;
+      bool duty_changed = false;
 
-      if (duty_diff >= 2)  /* 2% threshold */
+      /* Check for duty cycle change (threshold: 2% to avoid noise) */
+      if (pwm_mon_states[ch].signal_detected)
       {
-        duty_changed = true;
-      }
-    }
+        uint32_t duty_diff = (pwm_mon_states[ch].duty_cycle > pwm_mon_states[ch].previous_duty_cycle) ?
+                             (pwm_mon_states[ch].duty_cycle - pwm_mon_states[ch].previous_duty_cycle) :
+                             (pwm_mon_states[ch].previous_duty_cycle - pwm_mon_states[ch].duty_cycle);
 
-    /* Send unsolicited response if signal state or duty cycle changed */
-    if (signal_changed || duty_changed)
-    {
-      if (PWM_MON_GetData((PWM_MON_Channel_t)ch, &data) == PWM_MON_OK)
-      {
-        PWM_MON_SendResponse((PWM_MON_Channel_t)ch, &data);
+        if (duty_diff >= 2)  /* 2% threshold */
+        {
+          duty_changed = true;
+        }
       }
 
-      /* Update previous state */
-      pwm_mon_states[ch].was_detected = pwm_mon_states[ch].signal_detected;
-      pwm_mon_states[ch].previous_duty_cycle = pwm_mon_states[ch].duty_cycle;
+      /* Send unsolicited response if signal state or duty cycle changed */
+      if (signal_changed || duty_changed)
+      {
+        if (PWM_MON_GetData((PWM_MON_Channel_t)ch, &data) == PWM_MON_OK)
+        {
+          PWM_MON_SendResponse((PWM_MON_Channel_t)ch, &data);
+        }
+
+        /* Update previous state */
+        pwm_mon_states[ch].was_detected = pwm_mon_states[ch].signal_detected;
+        pwm_mon_states[ch].previous_duty_cycle = pwm_mon_states[ch].duty_cycle;
+      }
+
+      /* Mark this measurement as checked */
+      pwm_mon_states[ch].last_checked_ticks = pwm_mon_states[ch].last_update_ticks;
     }
   }
 }
