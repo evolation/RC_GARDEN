@@ -109,7 +109,7 @@ void PWM_MON_Process(void);
  * @param channel Channel that triggered the response
  * @param data PWM measurement data to send
  */
-void PWM_MON_SendResponse(PWM_MON_Channel_t channel, const PWM_MON_Data_t *data);
+void PWM_MON_SendResponse(PWM_MON_Channel_t channel, const PWM_MON_Data_t *data, uint32_t pkt_counter);
 
 /**
  * @brief Input capture callback (called from timer ISR)

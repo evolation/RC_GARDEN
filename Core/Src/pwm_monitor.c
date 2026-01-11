@@ -168,7 +168,7 @@ uint32_t PWM_MON_GetDutyCycle(PWM_MON_Channel_t channel)
 {
   if (channel >= PWM_MON_MAX)
   {
-    return 0;
+    return 0;  
   }
 
   return pwm_mon_states[channel].duty_cycle;
@@ -216,18 +216,18 @@ void PWM_MON_Process(void)
                              (pwm_mon_states[ch].duty_cycle - pwm_mon_states[ch].previous_duty_cycle) :
                              (pwm_mon_states[ch].previous_duty_cycle - pwm_mon_states[ch].duty_cycle);
 
-        if (duty_diff >= 2)  /* 2% threshold */
+        if (duty_diff >= 5 * PWM_MON_DUTY_THRESHOLD)  /* 2% threshold */
         {
           duty_changed = true;
         }
       }
-
+      static uint32_t pkt_counter;
       /* Send unsolicited response if signal state or duty cycle changed */
       if (signal_changed || duty_changed)
-      {
+      { 
         if (PWM_MON_GetData((PWM_MON_Channel_t)ch, &data) == PWM_MON_OK)
         {
-          PWM_MON_SendResponse((PWM_MON_Channel_t)ch, &data);
+          PWM_MON_SendResponse((PWM_MON_Channel_t)ch, &data,pkt_counter++);
         }
 
         /* Update previous state */
@@ -244,17 +244,16 @@ void PWM_MON_Process(void)
 /**
  * @brief Send unsolicited PWM status response
  */
-void PWM_MON_SendResponse(PWM_MON_Channel_t channel, const PWM_MON_Data_t *data)
+void PWM_MON_SendResponse(PWM_MON_Channel_t channel, const PWM_MON_Data_t *data, uint32_t pkt_counter)
 {
   char response[128];
   uint8_t len;
-
   if (data->signal_detected)
   {
     /* Format: "+PWM,CH<n>,<duty>%,<pulse>ms" */
     len = snprintf(response, sizeof(response),
-                   "+PWM,CH%u,%u%%,%u.%ums\r\n",
-                   channel + 1,
+                   "%u +PWM,CH%u,%u%%,%u.%ums\r\n",
+                   pkt_counter,channel + 1,
                    data->duty_cycle,
                    data->pulse_width_us / 1000,
                    data->pulse_width_us % 1000);

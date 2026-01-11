@@ -72,6 +72,12 @@ PWM_Status_t PWM_Init(void)
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
 
+  /* Explicitly enable Main Output for TIM1 (advanced timer requirement) */
+  __HAL_TIM_MOE_ENABLE(&htim1);
+
+  /* Force update event to ensure outputs are active */
+  HAL_TIM_GenerateEvent(&htim1, TIM_EVENTSOURCE_UPDATE);
+
   return PWM_OK;
 }
 
@@ -169,7 +175,7 @@ static void MX_TIM1_PWM_Init(void)
   TIM_BreakDeadTimeConfigTypeDef sBreakDeadTimeConfig = {0};
 
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler         = 31U;                            /* 32 MHz / (31+1) = 1 MHz */
+  htim1.Init.Prescaler         = 47U;                            /* 48 MHz / (47+1) = 1 MHz */
   htim1.Init.CounterMode       = TIM_COUNTERMODE_UP;
   htim1.Init.Period            = PWM_TIMER_PERIOD - 1U;          /* 20000 - 1 = 19999 ticks */
   htim1.Init.ClockDivision     = TIM_CLOCKDIVISION_DIV1;
@@ -201,6 +207,10 @@ static void MX_TIM1_PWM_Init(void)
   {
     Error_Handler();
   }
+
+  /* Disable output compare preload for immediate CCR updates */
+  LL_TIM_OC_DisablePreload(htim1.Instance, LL_TIM_CHANNEL_CH1);
+  LL_TIM_OC_DisablePreload(htim1.Instance, LL_TIM_CHANNEL_CH2);
 
   sBreakDeadTimeConfig.OffStateRunMode  = TIM_OSSR_DISABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
@@ -246,6 +256,7 @@ static void PWM_UpdateCompare(PWM_Channel_t channel)
 
   pwm_states[channel].compare_val = compare_val;
 
+  /* Update compare register (preload disabled, takes effect immediately) */
   __HAL_TIM_SET_COMPARE(&htim1, pwm_states[channel].channel, compare_val);
 }
 
