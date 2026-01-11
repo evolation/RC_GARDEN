@@ -20,7 +20,6 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "platform.h"
-#include "sys_app.h"
 #include "test_rf.h"
 #include "radio.h"
 #include "stm32_seq.h"
@@ -49,19 +48,10 @@
 #define CR4o5                         1
 #define CR4o8                         4      /* Enhanced error correction (4/8) */
 #define EMISSION_POWER                P_22dBm /* Optimized: Maximum TX power for 2-way link */
-#define CONTINUOUS_TIMEOUT           0xFFFF
 #define LORA_PREAMBLE_LENGTH          8         /* Same for Tx and Rx */
 #define LORA_SYMBOL_TIMEOUT           30        /* Symbols */
 #define TX_TIMEOUT_VALUE              3000
-#define LORA_FIX_LENGTH_PAYLOAD_OFF   false
-#define LORA_IQ_INVERSION_OFF         false
-#define TX_TEST_TONE                  (1<<0)
-#define RX_TEST_RSSI                  (1<<1)
-#define TX_TEST_MODU                  (1<<2)
-#define RX_TEST_MODU                  (1<<3)
-#define RX_TIMEOUT_VALUE              5000
 #define RX_CONTINUOUS_ON              1
-#define PRBS9_INIT                    ( ( uint16_t) 2 )
 #define DEFAULT_PAYLOAD_LEN           16
 #define DEFAULT_LDR_OPT               2
 #define DEFAULT_FSK_DEVIATION         25000
@@ -79,8 +69,6 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-static uint8_t TestState = 0;
-
 /* Optimized for maximum receive distance with RC_GUARD PWM signals */
 static testParameter_t testParam = {
     TEST_LORA,                      /* Modulation: LoRa (best range) */
@@ -110,21 +98,12 @@ static __IO int8_t last_rx_LoraSnr_FskCfo = 0;
  */
 static RadioEvents_t RadioEvents;
 
-/*!
- * Radio test payload pointer
- */
-static uint8_t payload[256] = {0};
-
 /* USER CODE BEGIN PV */
 
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 
-/*!
- * \brief Generates a PRBS9 sequence
- */
-static int32_t Prbs9_generator(uint8_t *payload, uint8_t len);
 /*!
  * \brief Function to be executed on Radio Tx Done event
  */
@@ -151,211 +130,15 @@ void OnRxTimeout(void);
 void OnRxError(void);
 
 /* USER CODE BEGIN PFP */
-static void TST_Radio_Init(void);
-static int32_t TST_Radio_ConfigTx(TxConfigGeneric_t *txConfig);
-static int32_t TST_Radio_ConfigRx(RxConfigGeneric_t *rxConfig);
+void TST_Radio_Init(void);
+int32_t TST_Radio_ConfigTx(TxConfigGeneric_t *txConfig);
+int32_t TST_Radio_ConfigRx(RxConfigGeneric_t *rxConfig);
+int32_t TST_Radio_Send(const uint8_t *data, uint16_t size);
 
 /* USER CODE END PFP */
 
 /* Exported functions --------------------------------------------------------*/
-int32_t TST_TxTone(void)
-{
-  return 0;
-}
-
-int32_t TST_RxRssi(void)
-{
-  return 0;
-}
-
-int32_t  TST_set_config(testParameter_t *Param)
-{
-  
-  return 0;
-  /* USER CODE BEGIN TST_get_config_2 */
-
-  /* USER CODE END TST_get_config_2 */
-}
-
-int32_t TST_stop(void)
-{
-  return 0;
-}
-
-int32_t TST_TX_Start(int32_t nb_packet)
-{
-  /* USER CODE BEGIN TST_TX_Start_1 */
-
-  /* USER CODE END TST_TX_Start_1 */
-  int32_t i;
-  TxConfigGeneric_t TxConfig = {0};
-
-  if ((TestState & TX_TEST_MODU) != TX_TEST_MODU)
-  {
-    TestState |= TX_TEST_MODU;
-
-    APP_TPRINTF("Tx Test\r\n");
-
-    /* Radio initialization */
-    TST_Radio_Init();
-    /*Fill payload with PRBS9 data*/
-    Prbs9_generator(payload, testParam.payloadLen);
-
-    /* Launch several times payload: nb times given by user */
-    for (i = 1; i <= nb_packet; i++)
-    {
-      APP_TPRINTF("Tx %d of %d\r\n", i, nb_packet);
-      Radio.SetChannel(testParam.freq);
-
-      if (TST_Radio_ConfigTx(&TxConfig) != 0)
-      {
-        return -1; /*error*/
-      }
-      /* Send payload once*/
-      Radio.Send(payload, testParam.payloadLen);
-      /* Wait Tx done/timeout */
-      UTIL_SEQ_WaitEvt(1 << CFG_SEQ_Evt_RadioOnTstRF);
-      Radio.Sleep();
-
-      if (RadioTxDone_flag == 1)
-      {
-        APP_TPRINTF("OnTxDone\r\n");
-      }
-
-      if (RadioTxTimeout_flag == 1)
-      {
-        APP_TPRINTF("OnTxTimeout\r\n");
-      }
-
-      if (RadioError_flag == 1)
-      {
-        APP_TPRINTF("OnRxError\r\n");
-      }
-
-      /*Delay between 2 consecutive Tx*/
-      HAL_Delay(500);
-      /* Reset TX Done or timeout flags */
-      RadioTxDone_flag = 0;
-      RadioTxTimeout_flag = 0;
-      RadioError_flag = 0;
-    }
-    TestState &= ~TX_TEST_MODU;
-    return 0;
-  }
-  else
-  {
-    return -1;
-  }
-  /* USER CODE BEGIN TST_TX_Start_2 */
-
-  /* USER CODE END TST_TX_Start_2 */
-}
-
-int32_t TST_RX_Start(int32_t nb_packet)
-{
-  /* USER CODE BEGIN TST_RX_Start_1 */
-
-  /* USER CODE END TST_RX_Start_1 */
-  int32_t i;
-  /* init of PER counter */
-  uint32_t count_RxOk = 0;
-  uint32_t count_RxKo = 0;
-  uint32_t PER = 0;
-  RxConfigGeneric_t RxConfig = {0};
-
-  if (((TestState & RX_TEST_MODU) != RX_TEST_MODU) && (nb_packet > 0))
-  {
-    TestState |= RX_TEST_MODU;
-
-    /* Radio initialization */
-    TST_Radio_Init();
-
-    for (i = 1; i <= nb_packet; i++)
-    {
-      /* Rx config */
-      Radio.SetChannel(testParam.freq);
-
-      if (TST_Radio_ConfigRx(&RxConfig) != 0)
-      {
-        /* excluding MSK Rx */
-        return -1; /* error */
-      }
-
-      if (testParam.lna == 0)
-      {
-        Radio.Rx(RX_TIMEOUT_VALUE);
-      }
-      else
-      {
-        Radio.RxBoosted(RX_TIMEOUT_VALUE);
-      }
-
-      /* Wait Rx done/timeout */
-      UTIL_SEQ_WaitEvt(1 << CFG_SEQ_Evt_RadioOnTstRF);
-      Radio.Sleep();
-
-      if (RadioRxDone_flag == 1)
-      {
-        int16_t rssi = last_rx_rssi;
-        int8_t LoraSnr_FskCfo = last_rx_LoraSnr_FskCfo;
-        APP_TPRINTF("OnRxDone\r\n");
-        if (testParam.modulation == TEST_FSK)
-        {
-          APP_TPRINTF("RssiValue=%d dBm, cfo=%dkHz\r\n", rssi, LoraSnr_FskCfo);
-        }
-        else
-        {
-          APP_TPRINTF("RssiValue=%d dBm, SnrValue=%ddB\r\n", rssi, LoraSnr_FskCfo);
-        }
-      }
-
-      if (RadioRxTimeout_flag == 1)
-      {
-        APP_TPRINTF("OnRxTimeout\r\n");
-      }
-
-      if (RadioError_flag == 1)
-      {
-        APP_TPRINTF("OnRxError\r\n");
-      }
-
-      /*check flag*/
-      if ((RadioRxTimeout_flag == 1) || (RadioError_flag == 1))
-      {
-        count_RxKo++;
-      }
-      if ((RadioRxDone_flag == 1) && (RadioError_flag != 1))
-      {
-        count_RxOk++;
-      }
-      /* Reset timeout flag */
-      RadioRxDone_flag = 0;
-      RadioRxTimeout_flag = 0;
-      RadioError_flag = 0;
-
-      /* Compute PER */
-      PER = (100 * (count_RxKo)) / (count_RxKo + count_RxOk);
-      APP_TPRINTF("Rx %d of %d  >>> PER= %d %%\r\n", i, nb_packet, PER);
-    }
-    TestState &= ~RX_TEST_MODU;
-    return 0;
-  }
-  else
-  {
-    return -1;
-  }
-  /* USER CODE BEGIN TST_RX_Start_2 */
-
-  /* USER CODE END TST_RX_Start_2 */
-}
-
-/* USER CODE BEGIN EF */
-int32_t TST_RX_Continuous_Start(void)
-{
-  return 0;
-}
-
-static void TST_Radio_Init(void)
+void TST_Radio_Init(void)
 {
   RadioEvents.TxDone = OnTxDone;
   RadioEvents.RxDone = OnRxDone;
@@ -365,7 +148,7 @@ static void TST_Radio_Init(void)
   Radio.Init(&RadioEvents);
 }
 
-static int32_t TST_Radio_ConfigTx(TxConfigGeneric_t *txConfig)
+int32_t TST_Radio_ConfigTx(TxConfigGeneric_t *txConfig)
 {
   static const uint8_t syncword[] = { 0xC1, 0x94, 0xC1, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
@@ -374,6 +157,7 @@ static int32_t TST_Radio_ConfigTx(TxConfigGeneric_t *txConfig)
     return -1;
   }
 
+  Radio.SetChannel(testParam.freq);
   UTIL_MEM_set_8(txConfig, 0, sizeof(*txConfig));
 
   if (testParam.modulation == TEST_FSK)
@@ -436,7 +220,7 @@ static int32_t TST_Radio_ConfigTx(TxConfigGeneric_t *txConfig)
   return 0;
 }
 
-static int32_t TST_Radio_ConfigRx(RxConfigGeneric_t *rxConfig)
+int32_t TST_Radio_ConfigRx(RxConfigGeneric_t *rxConfig)
 {
   static const uint8_t syncword[] = { 0xC1, 0x94, 0xC1, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
@@ -445,6 +229,7 @@ static int32_t TST_Radio_ConfigRx(RxConfigGeneric_t *rxConfig)
     return -1;
   }
 
+  Radio.SetChannel(testParam.freq);
   UTIL_MEM_set_8(rxConfig, 0, sizeof(*rxConfig));
 
   if (testParam.modulation == TEST_FSK)
@@ -488,6 +273,24 @@ static int32_t TST_Radio_ConfigRx(RxConfigGeneric_t *rxConfig)
 
   return 0;
 }
+
+int32_t TST_Radio_Send(const uint8_t *data, uint16_t size)
+{
+  if (size == 0U)
+  {
+    return 0;
+  }
+
+  if (data == NULL)
+  {
+    return -1;
+  }
+
+  Radio.Send((uint8_t *)data, size);
+  return 0;
+}
+
+/* USER CODE BEGIN EF */
 
 /* USER CODE END EF */
 
@@ -564,28 +367,6 @@ void OnRxError(void)
   /* USER CODE BEGIN OnRxError_2 */
 
   /* USER CODE END OnRxError_2 */
-}
-
-static int32_t Prbs9_generator(uint8_t *payload, uint8_t len)
-{
-  /* USER CODE BEGIN Prbs9_generator_1 */
-
-  /* USER CODE END Prbs9_generator_1 */
-  uint16_t prbs9_val = PRBS9_INIT;
-  /*init payload to 0*/
-  UTIL_MEM_set_8(payload, 0, len);
-
-  for (int32_t i = 0; i < len * 8; i++)
-  {
-    /*fill buffer with prbs9 sequence*/
-    int32_t newbit = (((prbs9_val >> 8) ^ (prbs9_val >> 4)) & 1);
-    prbs9_val = ((prbs9_val << 1) | newbit) & 0x01ff;
-    payload[i / 8] |= ((prbs9_val & 0x1) << (i % 8));
-  }
-  return 0;
-  /* USER CODE BEGIN Prbs9_generator_2 */
-
-  /* USER CODE END Prbs9_generator_2 */
 }
 
 /* USER CODE BEGIN PrFD */

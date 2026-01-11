@@ -23,6 +23,7 @@
 #include "subghz_phy_app.h"
 #include "sys_app.h"
 #include "stm32_seq.h"
+#include "test_rf.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -71,6 +72,13 @@ void MX_SubGHz_Phy_Init(void)
   /* USER CODE END MX_SubGHz_Phy_Init_1_1 */
   SubghzApp_Init();
   /* USER CODE BEGIN MX_SubGHz_Phy_Init_2 */
+  TxConfigGeneric_t txConfig = {0};
+  RxConfigGeneric_t rxConfig = {0};
+
+  TST_Radio_Init();
+  (void)TST_Radio_ConfigTx(&txConfig);
+  (void)TST_Radio_ConfigRx(&rxConfig);
+  (void)TST_Radio_Send(NULL, 0U);
 
   /* USER CODE END MX_SubGHz_Phy_Init_2 */
 }

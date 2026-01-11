@@ -28,6 +28,7 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
+#include "radio.h"
 
 /* USER CODE BEGIN Includes */
 
@@ -88,58 +89,10 @@ typedef struct
 /* USER CODE END EM */
 
 /* Exported functions ------------------------------------------------------- */
-/**
-  * @brief RF Tone test command
-  * @retval status 0 ok, -1 ko
-  */
-int32_t TST_TxTone(void);
-
-/**
-  * @brief RF Receive  test command
-  * @retval status 0 ok, -1 ko
-  */
-int32_t TST_RxRssi(void);
-
-/**
-  * @brief RF Transmit LORA test command
-  * @note Transmits [0x00, 0x11, 0x22, ... 0xFF]
-  * @param[in] nb_packet nb of packets
-  * @retval status 0 ok, -1 ko
-  */
-int32_t TST_TX_Start(int32_t nb_packet);
-
-/**
-  * @brief RF Receive LORA test command
-  * @param[in] nb_packet nb of packets
-  * @retval status 0 ok, -1 ko
-  */
-int32_t TST_RX_Start(int32_t nb_packet);
-
-/**
-  * @brief RF Set Radio Configuration test command
-  * @param[in] Param Pointer config param
-  * @retval status 0 ok, -1 ko
-  */
-int32_t TST_set_config(testParameter_t *Param);
-
-/**
-  * @brief RF Get Radio Configuration test command
-  * @param[in] Param Pointer config param
-  * @retval LoRa status
-  */
-int32_t TST_get_config(testParameter_t *Param);
-
-/**
-  * @brief RF test stop
-  * @retval LoRa status
-  */
-int32_t TST_stop(void);
-
-/**
-  * @brief Initialize radio in continuous RX mode for maximum reception
-  * @retval status 0 ok, -1 ko
-  */
-int32_t TST_RX_Continuous_Start(void);
+void TST_Radio_Init(void);
+int32_t TST_Radio_ConfigTx(TxConfigGeneric_t *txConfig);
+int32_t TST_Radio_ConfigRx(RxConfigGeneric_t *rxConfig);
+int32_t TST_Radio_Send(const uint8_t *data, uint16_t size);
 
 /* USER CODE BEGIN EFP */
 
