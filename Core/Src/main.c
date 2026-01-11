@@ -115,7 +115,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-    MX_SubGHz_Phy_Process();
+//    MX_SubGHz_Phy_Process();
     PWM_Process();
     PWM_MON_Process();  /* Monitor PWM inputs and send unsolicited responses */
 
